@@ -29,6 +29,9 @@ yarn-error.log*
 # credentials (only encrypted version should be committed)
 CREDENTIALS.md
 
+# documentation PDFs (local only)
+docs/
+
 # vercel
 .vercel
 
