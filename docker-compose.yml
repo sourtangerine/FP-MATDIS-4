@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: bantuan
+      POSTGRES_PASSWORD: bantuan123
+      POSTGRES_DB: bantuan_bencana
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://bantuan:bantuan123@db:5432/bantuan_bencana
+      NEXTAUTH_SECRET: "dev-secret-change-in-production"
+      NEXTAUTH_URL: "http://localhost:3000"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

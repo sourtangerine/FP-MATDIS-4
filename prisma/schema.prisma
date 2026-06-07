@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(OPERATOR)
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+  KOORDINATOR_LAPANGAN
+}
+
+model TitikBantuan {
+  id           String        @id @default(cuid())
+  nama         String
+  alamat       String
+  kecamatan    String
+  kelurahan    String
+  latitude     Float
+  longitude    Float
+  urgensi      Urgensi       @default(SEDANG)
+  status       StatusTitik   @default(MENUNGGU)
+  jenisBantuan String
+  distribusi   Distribusi[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum Urgensi {
+  TINGGI
+  SEDANG
+  RENDAH
+}
+
+enum StatusTitik {
+  MENUNGGU
+  SEDANG_DIKIRIM
+  SELESAI
+  TERTUNDA
+}
+
+model Kendaraan {
+  id         String            @id @default(cuid())
+  nama       String
+  platNomor  String            @unique
+  kapasitas  Float
+  status     StatusKendaraan   @default(TERSEDIA)
+  distribusi Distribusi[]
+}
+
+enum StatusKendaraan {
+  TERSEDIA
+  BERTUGAS
+  TIDAK_TERSEDIA
+}
+
+model Distribusi {
+  id             String           @id @default(cuid())
+  titikBantuanId String
+  titikBantuan   TitikBantuan     @relation(fields: [titikBantuanId], references: [id])
+  kendaraanId    String
+  kendaraan      Kendaraan        @relation(fields: [kendaraanId], references: [id])
+  beratBantuan   Float
+  status         StatusDistribusi  @default(BERJALAN)
+  waktuMulai     DateTime         @default(now())
+  waktuSelesai   DateTime?
+  rutePath       Json?
+  jarakAwal      Float?
+  jarakOptimal   Float?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+enum StatusDistribusi {
+  BERJALAN
+  SELESAI
+  TERTUNDA
+}
+
+model GraphNode {
+  id        String      @id @default(cuid())
+  label     String
+  latitude  Float
+  longitude Float
+  x         Float
+  y         Float
+  isDepot   Boolean     @default(false)
+  edges     GraphEdge[] @relation("FromNode")
+  edgesTo   GraphEdge[] @relation("ToNode")
+}
+
+model GraphEdge {
+  id       String    @id @default(cuid())
+  fromId   String
+  toId     String
+  weight   Float
+  from     GraphNode @relation("FromNode", fields: [fromId], references: [id])
+  to       GraphNode @relation("ToNode", fields: [toId], references: [id])
+}
