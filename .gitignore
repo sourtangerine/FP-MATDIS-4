@@ -26,6 +26,9 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# credentials (only encrypted version should be committed)
+CREDENTIALS.md
+
 # vercel
 .vercel
 

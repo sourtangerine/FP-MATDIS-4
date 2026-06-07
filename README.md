@@ -18,6 +18,7 @@ Sistem Penyaluran Bantuan Bencana dengan optimasi rute menggunakan algoritma Dij
 ```bash
 # 1. Copy environment variables
 cp .env.example .env.local
+# Edit .env.local with your actual credentials (see CREDENTIALS.md.gpg)
 
 # 2. Start PostgreSQL with Docker
 docker compose up -d db
@@ -40,35 +41,29 @@ Visit http://localhost:3000
 ## Docker (Full Stack)
 
 ```bash
-# Build and start all services
 docker compose up --build
-
-# Visit http://localhost:3000
 ```
 
-## Login Credentials
+## Credentials
 
-> ⚠️ **SENSITIVE — Do not share publicly or commit to public repos.**
+Login credentials and secrets are stored in an encrypted file: **`CREDENTIALS.md.gpg`**
 
-| Email | Password | Role |
-|-------|----------|------|
-| `admin@bantuan.id` | `password123` | Admin |
-| `operator@bantuan.id` | `password123` | Operator |
-| `koordinator@bantuan.id` | `password123` | Koordinator Lapangan |
+To decrypt:
+```bash
+gpg --decrypt CREDENTIALS.md.gpg
+```
 
-> These are default development/seed credentials. **Change all passwords immediately** in any production environment.
+Contact the project maintainer for the decryption passphrase.
 
 ## Environment Variables
 
-> ⚠️ **SENSITIVE — Never commit `.env.local` or actual values to version control.**
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `NEXTAUTH_SECRET` | JWT signing key |
+| `NEXTAUTH_URL` | Public app URL |
 
-| Variable | Description | Sensitivity |
-|----------|-------------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string (contains credentials) | 🔴 **Secret** |
-| `NEXTAUTH_SECRET` | JWT signing key | 🔴 **Secret** |
-| `NEXTAUTH_URL` | Public app URL | 🟢 Public |
-
-Store secrets in Vercel Environment Variables (encrypted) or your hosting provider's secret manager. Never hardcode them in source files.
+> ⚠️ Actual values are in the encrypted credentials file. Never commit secrets to source control.
 
 ## Vercel Deployment
 
@@ -76,19 +71,18 @@ Store secrets in Vercel Environment Variables (encrypted) or your hosting provid
 2. Create a new project → copy the `DATABASE_URL`
 3. Push this repo to GitHub
 4. Import the repo in [vercel.com](https://vercel.com) → New Project
-5. Add environment variables (marked 🔴 above) in Vercel's **Settings → Environment Variables** (encrypted at rest)
+5. Add environment variables in Vercel's **Settings → Environment Variables**
 6. Set Vercel build command to: `npm run vercel-build`
 7. Deploy
-8. Run seed via Neon SQL console or use the `/api/seed` endpoint (admin-protected)
+8. Seed the database via Neon SQL console or the `/api/seed` endpoint (admin-protected)
 
 ## Security Notes
 
 - All passwords in the database are **bcrypt-hashed** (cost factor 10).
-- JWT tokens are signed with `NEXTAUTH_SECRET` — rotate this key periodically.
-- The `/api/seed` endpoint is protected and requires ADMIN role authentication.
-- API routes validate sessions before responding; unauthorized requests return 401/403.
+- JWT tokens are signed with `NEXTAUTH_SECRET` — rotate periodically.
+- The `/api/seed` endpoint requires ADMIN role authentication.
+- API routes validate sessions; unauthorized requests return 401/403.
 - Role-based access control restricts page and API access per user role.
-- Database credentials should use Neon's **connection pooling** with SSL in production.
 
 ## Features
 
