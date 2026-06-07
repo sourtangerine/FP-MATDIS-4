@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { dijkstra } from "@/lib/dijkstra";
+import { getOSRMRoute } from "@/lib/osrm";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -84,9 +85,28 @@ export async function POST(req: NextRequest) {
       );
 
       if (result.found) {
-        jarakOptimal = result.totalCost;
-        jarakAwal = jarakOptimal * (1 + Math.random() * 0.3); // Simulate longer non-optimal route
-        rutePath = result;
+        // Get real road distance using OSRM
+        const osrmRoute = await getOSRMRoute(
+          depotNode.latitude,
+          depotNode.longitude,
+          titik.latitude,
+          titik.longitude
+        );
+
+        if (osrmRoute) {
+          jarakOptimal = Math.round(osrmRoute.distance * 100) / 100;
+          // Simulate a longer non-optimal route (straight-line * factor)
+          const straightLine = Math.sqrt(
+            Math.pow((depotNode.latitude - titik.latitude) * 111, 2) +
+              Math.pow((depotNode.longitude - titik.longitude) * 111 * Math.cos(depotNode.latitude * Math.PI / 180), 2)
+          );
+          jarakAwal = Math.round((jarakOptimal + straightLine * 0.3) * 100) / 100;
+          rutePath = { ...result, roadCoordinates: osrmRoute.coordinates };
+        } else {
+          jarakOptimal = result.totalCost;
+          jarakAwal = Math.round(jarakOptimal * (1 + Math.random() * 0.3) * 100) / 100;
+          rutePath = result;
+        }
       }
     }
 
