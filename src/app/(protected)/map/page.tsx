@@ -99,10 +99,21 @@ export default function MapPage() {
       const titikData = await titikRes.json();
       const ruteData = await ruteRes.json();
       const kendaraanData = await kendaraanRes.json();
-      setTitikBantuan(titikData);
+
+      if (Array.isArray(titikData)) {
+        setTitikBantuan(titikData);
+      } else {
+        console.error("titik-bantuan response is not array:", titikData);
+      }
+
       setGraphNodes(ruteData.nodes || []);
       setGraphEdges(ruteData.edges || []);
-      setKendaraan(kendaraanData);
+
+      if (Array.isArray(kendaraanData)) {
+        setKendaraan(kendaraanData);
+      } else {
+        console.error("kendaraan response is not array:", kendaraanData);
+      }
     } catch (error) {
       console.error("Failed to fetch map data:", error);
     }
@@ -428,7 +439,7 @@ export default function MapPage() {
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Titik Bantuan
+                  Titik Bantuan {titikBantuan.length > 0 && <span className="text-gray-400">({titikBantuan.length} tersedia)</span>}
                 </label>
                 <select
                   value={setupForm.titikBantuanId}
@@ -437,17 +448,19 @@ export default function MapPage() {
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4338ca] outline-none"
                 >
-                  <option value="">Pilih titik bantuan</option>
+                  <option value="">
+                    {titikBantuan.length === 0 ? "Memuat data..." : "Pilih titik bantuan"}
+                  </option>
                   {titikBantuan.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.nama} — {t.status.replace("_", " ")} ({t.urgensi})
+                      {t.nama} — {t.status.replace(/_/g, " ")} ({t.urgensi})
                     </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kendaraan
+                  Kendaraan {kendaraan.length > 0 && <span className="text-gray-400">({kendaraan.filter(k => k.status === "TERSEDIA").length} tersedia)</span>}
                 </label>
                 <select
                   value={setupForm.kendaraanId}
@@ -456,10 +469,12 @@ export default function MapPage() {
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4338ca] outline-none"
                 >
-                  <option value="">Pilih kendaraan</option>
+                  <option value="">
+                    {kendaraan.length === 0 ? "Memuat data..." : "Pilih kendaraan"}
+                  </option>
                   {kendaraan.map((k) => (
                     <option key={k.id} value={k.id} disabled={k.status !== "TERSEDIA"}>
-                      {k.nama} ({k.platNomor}) - {k.kapasitas}kg [{k.status}]
+                      {k.nama} ({k.platNomor}) - {k.kapasitas}kg {k.status !== "TERSEDIA" ? `[${k.status}]` : "✓"}
                     </option>
                   ))}
                 </select>
