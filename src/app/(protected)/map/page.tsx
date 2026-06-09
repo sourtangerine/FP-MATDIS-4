@@ -438,13 +438,11 @@ export default function MapPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4338ca] outline-none"
                 >
                   <option value="">Pilih titik bantuan</option>
-                  {titikBantuan
-                    .filter((t) => t.status !== "SELESAI")
-                    .map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.nama}
-                      </option>
-                    ))}
+                  {titikBantuan.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.nama} — {t.status.replace("_", " ")} ({t.urgensi})
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -459,13 +457,11 @@ export default function MapPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4338ca] outline-none"
                 >
                   <option value="">Pilih kendaraan</option>
-                  {kendaraan
-                    .filter((k) => k.status === "TERSEDIA")
-                    .map((k) => (
-                      <option key={k.id} value={k.id}>
-                        {k.nama} ({k.platNomor}) - {k.kapasitas}kg
-                      </option>
-                    ))}
+                  {kendaraan.map((k) => (
+                    <option key={k.id} value={k.id} disabled={k.status !== "TERSEDIA"}>
+                      {k.nama} ({k.platNomor}) - {k.kapasitas}kg [{k.status}]
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -486,8 +482,8 @@ export default function MapPage() {
             <div className="flex gap-2 mt-4">
               <button
                 onClick={handleSetup}
-                disabled={setupLoading}
-                className="flex-1 bg-[#4338ca] hover:bg-[#3730a3] text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+                disabled={setupLoading || !setupForm.titikBantuanId || !setupForm.kendaraanId || !setupForm.beratBantuan}
+                className="flex-1 bg-[#4338ca] hover:bg-[#3730a3] text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {setupLoading ? "Memproses..." : "Assign"}
               </button>
