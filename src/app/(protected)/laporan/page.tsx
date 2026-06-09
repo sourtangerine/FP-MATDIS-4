@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Header from "@/components/Header";
 import MapView from "@/components/MapView";
+import DeliveryAnimationWrapper from "@/components/DeliveryAnimationWrapper";
 
 interface Distribusi {
   id: string;
@@ -15,6 +16,7 @@ interface Distribusi {
     latitude: number;
     longitude: number;
     urgensi: string;
+    jenisBantuan: string;
   };
   kendaraan: {
     id: string;
@@ -26,7 +28,20 @@ interface Distribusi {
   waktuMulai: string;
   waktuSelesai: string | null;
   jarakOptimal: number | null;
-  rutePath: { pathCoordinates?: [number, number][] } | null;
+  rutePath: { pathCoordinates?: [number, number][]; roadCoordinates?: [number, number][] } | null;
+}
+
+// Map jenisBantuan or urgensi to disaster type for visualization
+function getDisasterType(jenisBantuan: string, nama: string): string {
+  const text = (jenisBantuan + " " + nama).toLowerCase();
+  if (text.includes("kebakaran") || text.includes("api")) return "kebakaran";
+  if (text.includes("gempa")) return "gempa";
+  if (text.includes("tsunami") || text.includes("gelombang")) return "tsunami";
+  if (text.includes("banjir") || text.includes("air")) return "banjir";
+  // Default based on urgensi/random
+  const types = ["kebakaran", "gempa", "banjir", "tsunami"];
+  const hash = nama.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return types[hash % types.length];
 }
 
 export default function LaporanPage() {
@@ -37,11 +52,20 @@ export default function LaporanPage() {
   const [page, setPage] = useState(1);
   const perPage = 10;
 
+  // Animation state
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [animationRoute, setAnimationRoute] = useState<[number, number][]>([]);
+  const [animationTarget, setAnimationTarget] = useState("");
+  const [animationDisaster, setAnimationDisaster] = useState("kebakaran");
+  const [animatingId, setAnimatingId] = useState<string | null>(null);
+
   const fetchData = useCallback(async () => {
     try {
       const res = await fetch("/api/distribusi");
       const data = await res.json();
-      setDistribusi(data);
+      if (Array.isArray(data)) {
+        setDistribusi(data);
+      }
     } catch (error) {
       console.error("Failed to fetch distribusi:", error);
     }
@@ -51,7 +75,66 @@ export default function LaporanPage() {
     fetchData();
   }, [fetchData]);
 
-  const handleMarkSelesai = async (id: string) => {
+  const handleKirim = async (d: Distribusi) => {
+    setAnimatingId(d.id);
+
+    // Get road route from API
+    try {
+      // Posko Pusat coordinates (depot)
+      const poskoLat = -7.2575;
+      const poskoLng = 112.7521;
+      const destLat = d.titikBantuan.latitude;
+      const destLng = d.titikBantuan.longitude;
+
+      // Fetch OSRM route for animation
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${poskoLng},${poskoLat};${destLng},${destLat}?overview=full&geometries=geojson`;
+      const routeRes = await fetch(osrmUrl);
+      const routeData = await routeRes.json();
+
+      let coordinates: [number, number][] = [];
+
+      if (routeData.code === "Ok" && routeData.routes && routeData.routes.length > 0) {
+        // OSRM returns [lng, lat], convert to [lat, lng]
+        coordinates = routeData.routes[0].geometry.coordinates.map(
+          (coord: [number, number]) => [coord[1], coord[0]] as [number, number]
+        );
+        // Sample every Nth point for smoother animation (limit to ~100 points)
+        if (coordinates.length > 100) {
+          const step = Math.floor(coordinates.length / 100);
+          const sampled: [number, number][] = [];
+          for (let i = 0; i < coordinates.length; i += step) {
+            sampled.push(coordinates[i]);
+          }
+          // Always include the last point
+          sampled.push(coordinates[coordinates.length - 1]);
+          coordinates = sampled;
+        }
+      } else {
+        // Fallback: straight line with intermediate points
+        coordinates = [
+          [poskoLat, poskoLng],
+          [(poskoLat + destLat) / 2, (poskoLng + destLng) / 2],
+          [destLat, destLng],
+        ];
+      }
+
+      const disasterType = getDisasterType(
+        d.titikBantuan.jenisBantuan || "",
+        d.titikBantuan.nama
+      );
+
+      setAnimationRoute(coordinates);
+      setAnimationTarget(d.titikBantuan.nama);
+      setAnimationDisaster(disasterType);
+      setShowAnimation(true);
+    } catch (error) {
+      console.error("Failed to get route for animation:", error);
+      // Still mark as complete if animation fails
+      await markSelesai(d.id);
+    }
+  };
+
+  const markSelesai = async (id: string) => {
     try {
       const res = await fetch(`/api/distribusi/${id}`, {
         method: "PATCH",
@@ -63,6 +146,20 @@ export default function LaporanPage() {
       }
     } catch (error) {
       console.error("Failed to update distribusi:", error);
+    }
+    setAnimatingId(null);
+  };
+
+  const handleAnimationComplete = () => {
+    if (animatingId) {
+      markSelesai(animatingId);
+    }
+  };
+
+  const handleAnimationClose = () => {
+    setShowAnimation(false);
+    if (animatingId) {
+      markSelesai(animatingId);
     }
   };
 
@@ -106,7 +203,7 @@ export default function LaporanPage() {
     const rows = filtered.map((d) => [
       d.titikBantuan.nama,
       `${d.titikBantuan.kecamatan} ${d.titikBantuan.kelurahan}`,
-      d.titikBantuan.nama,
+      `${d.beratBantuan} kg`,
       new Date(d.waktuMulai).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
       d.titikBantuan.urgensi,
       d.status,
@@ -220,10 +317,11 @@ export default function LaporanPage() {
                         </button>
                       ) : d.status === "BERJALAN" ? (
                         <button
-                          onClick={() => handleMarkSelesai(d.id)}
-                          className="px-3 py-1 border border-[#4338ca] text-[#4338ca] rounded-full text-xs font-medium hover:bg-[#4338ca] hover:text-white transition-colors"
+                          onClick={() => handleKirim(d)}
+                          disabled={animatingId === d.id}
+                          className="px-3 py-1 border border-[#4338ca] text-[#4338ca] rounded-full text-xs font-medium hover:bg-[#4338ca] hover:text-white transition-colors disabled:opacity-50"
                         >
-                          Kirim
+                          {animatingId === d.id ? "⏳" : "Kirim"}
                         </button>
                       ) : (
                         <button
@@ -273,6 +371,17 @@ export default function LaporanPage() {
           )}
         </div>
       </div>
+
+      {/* Delivery Animation Modal */}
+      {showAnimation && animationRoute.length > 0 && (
+        <DeliveryAnimationWrapper
+          routeCoordinates={animationRoute}
+          destinationName={animationTarget}
+          disasterType={animationDisaster}
+          onComplete={handleAnimationComplete}
+          onClose={handleAnimationClose}
+        />
+      )}
     </>
   );
 }
