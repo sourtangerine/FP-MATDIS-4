@@ -200,10 +200,10 @@ export default function MapPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="font-bold text-lg mr-4">Peta Sebaran</h2>
             {[
-              { icon: "📋", label: "Data Penerbangan", action: () => {} },
-              { icon: "🌐", label: "Perencanaan Penerbangan", action: () => setShowRouteModal(true) },
+              { icon: "📋", label: "Data Titik Bantuan", action: () => {} },
+              { icon: "🌐", label: "Optimasi Rute (Dijkstra)", action: () => setShowRouteModal(true) },
               { icon: "⚙️", label: "Setup", action: () => setShowSetupModal(true) },
-              { icon: "🖥️", label: "Simulasi", action: handleComputeRoute },
+              { icon: "🖥️", label: "Simulasikan Rute", action: handleComputeRoute },
               { icon: "📺", label: "Monitoring", action: () => window.location.href = "/monitoring" },
               { icon: "➕", label: "Tambah Titik", action: () => setShowAddModal(true) },
             ].map((btn) => (

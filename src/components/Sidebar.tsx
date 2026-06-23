@@ -49,10 +49,10 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`block px-4 py-2 rounded-lg text-sm transition-colors ${
+              className={`block px-4 py-2.5 rounded-lg text-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] ${
                 isActive
-                  ? "bg-white text-[#1e1b4b] font-medium"
-                  : "text-white/80 hover:bg-[#3730a3] hover:text-white"
+                  ? "bg-white text-[#1e1b4b] font-semibold shadow-md"
+                  : "text-white/85 hover:bg-[#3730a3] hover:text-white"
               }`}
             >
               {item.label}
@@ -65,7 +65,7 @@ export default function Sidebar() {
       <div className="p-4">
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="w-full text-left px-4 py-2 text-sm text-red-300 hover:text-red-100 hover:bg-red-900/30 rounded-lg transition-colors"
+          className="w-full text-left px-4 py-2.5 text-sm text-red-300 hover:text-red-100 hover:bg-red-900/30 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
         >
           Logout
         </button>

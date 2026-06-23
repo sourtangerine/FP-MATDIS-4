@@ -43,6 +43,28 @@ export default function DijkstraGraph({
   return (
     <div className="w-full overflow-auto">
       <svg viewBox="0 0 650 550" className="w-full h-auto max-h-[400px]">
+        {/* SVG Animations */}
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes march {
+            to {
+              stroke-dashoffset: -12;
+            }
+          }
+          .marching-ants {
+            stroke-dasharray: 6 6;
+            animation: march 0.8s linear infinite;
+          }
+          @keyframes pulse-node {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+          }
+          .pulsing-node {
+            transform-origin: center;
+            transform-box: fill-box;
+            animation: pulse-node 2s infinite ease-in-out;
+          }
+        `}} />
+
         {/* Edges */}
         {edges.map((edge) => {
           const from = nodeMap.get(edge.fromId);
@@ -61,9 +83,20 @@ export default function DijkstraGraph({
                 x2={to.x}
                 y2={to.y}
                 stroke={highlighted ? "#4338ca" : "#d1d5db"}
-                strokeWidth={highlighted ? 3 : 1.5}
+                strokeWidth={highlighted ? 4 : 1.5}
                 opacity={highlighted ? 1 : 0.6}
               />
+              {highlighted && (
+                <line
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                  stroke="#a5b4fc"
+                  strokeWidth={2}
+                  className="marching-ants"
+                />
+              )}
               <text
                 x={midX}
                 y={midY - 5}
@@ -82,7 +115,7 @@ export default function DijkstraGraph({
         {nodes.map((node) => {
           const isInPath = highlightPath.includes(node.id);
           return (
-            <g key={node.id}>
+            <g key={node.id} className={isInPath ? "pulsing-node" : ""}>
               <circle
                 cx={node.x}
                 cy={node.y}

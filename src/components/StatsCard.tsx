@@ -8,7 +8,7 @@ interface StatsCardProps {
 export default function StatsCard({ value, label, icon, highlight }: StatsCardProps) {
   return (
     <div
-      className={`bg-white rounded-xl p-4 shadow-sm border ${
+      className={`bg-white rounded-xl p-4 shadow-sm border hover:scale-[1.03] hover:shadow-md transition-all duration-300 ease-out cursor-default ${
         highlight ? "border-[#4338ca]/20" : "border-gray-100"
       }`}
     >
