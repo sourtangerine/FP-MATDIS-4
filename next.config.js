@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: process.env.DOCKER_BUILD === '1' ? 'standalone' : undefined,
+  // standalone output is needed for Docker (copies only required files)
+  output: "standalone",
 };
 
 module.exports = nextConfig;

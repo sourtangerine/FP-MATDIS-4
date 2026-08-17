@@ -3,6 +3,7 @@ version: "3.8"
 services:
   db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: bantuan
       POSTGRES_PASSWORD: bantuan123
@@ -11,17 +12,24 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bantuan -d bantuan_bencana"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
     build: .
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://bantuan:bantuan123@db:5432/bantuan_bencana
-      NEXTAUTH_SECRET: "dev-secret-change-in-production"
+      NEXTAUTH_SECRET: "dev-secret-change-in-production-use-openssl-rand-base64-32"
       NEXTAUTH_URL: "http://localhost:3000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:

@@ -38,11 +38,39 @@ npm run dev
 
 Visit http://localhost:3000
 
-## Docker (Full Stack)
+## Docker (Full Stack — Local)
+
+Run the entire app locally with one command. Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
 ```bash
+# Clone the repo
+git clone https://github.com/sourtangerine/FP-MATDIS-4.git
+cd FP-MATDIS-4
+
+# Build and start everything (app + PostgreSQL)
 docker compose up --build
 ```
+
+Visit **http://localhost:3000**
+
+The first run will:
+1. Build the Next.js app inside Docker
+2. Start PostgreSQL on port 5432
+3. Run `prisma migrate deploy` automatically
+4. Start the web server on port 3000
+
+To stop:
+```bash
+docker compose down
+```
+
+To stop and wipe the database:
+```bash
+docker compose down -v
+```
+
+After first run, seed the database by visiting:
+`http://localhost:3000/api/seed` (POST request, login as admin first)
 
 ## Credentials
 
